@@ -4,16 +4,16 @@ const multer = require('multer') //for image uploads
 const path = require('path');
 
 const storage = multer.diskStorage({
-    destination:(req, file, cb)=>{
-        cb(null,'images')
+    destination: (req, file, cb) => {
+        cb(null, 'images'); // Ensure this folder exists
     },
-    filename:(req, file, cb)=>{
-        cb(null,file.fieldname + '-' + Date.now() + path.extname(file.originalname))
-    }
+    filename: (req, file, cb) => {
+        cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
+    },
 })
 
 
-const upload = multer({storage:storage})
+const upload = multer({storage:storage, limits: { fileSize: 10 * 1024 * 1024 },})
 
 const router = express.Router()
 
@@ -27,6 +27,7 @@ router.get('/delete/:id', controllers.deleteBlog)
 router.post('/update/:id' , upload.single('image'), controllers.update)
 router.get('/comments-likes/:id', controllers.commentsLikes)
 router.post('/comment', controllers.comment)
+router.get('/viewallcomments/:blogId', controllers.viewAllComments)
 router.get('/cmtdelblog/:blogid/cmtdelcmt/:cmtindex', controllers.cmtdelblog)
 router.post('/like', controllers.like)
 router.post('/editprofile',controllers.editprofile)

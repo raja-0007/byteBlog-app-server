@@ -1,4 +1,8 @@
+const uuidv4 = require('uuid').v4;
 const models = require('../models/Models');
+const commentHandlers = require('./commentsHandler/CommentsHandler');
+const {comment, viewAllComments } = commentHandlers;
+
 
 const login = async (req, res) => {
     const { email, password } = req.body;
@@ -81,15 +85,17 @@ const home = async (req, res) => {
 };
 
 const create = async (req, res) => {
-    const { title, content, email, username } = req.body;
+    const { title, content, authorId, username, description, caption } = req.body;
     const newblog = new models.blogs({
         title,
         content,
         username,
-        user: email,
+        authorId: authorId,
         image: req.file?.filename,
         comments: [],
-        likes: []
+        likes: [],
+        description:description,
+        caption:caption
     });
     await newblog.save()
         .then(() => res.send('blog created'));
@@ -119,16 +125,30 @@ const commentsLikes = async (req, res) => {
     res.send(blog);
 };
 
-const comment = async (req, res) => {
-    const { id, comment, username, email } = req.body;
-    const date = new Date().toLocaleDateString('en-US', { day: 'numeric', year: 'numeric', month: 'short' });
+// const comment = async (req, res) => {
+//     console.log('comment addition')
+//     const { id, commentId, comment, username, email } = req.body;
+//     const date = new Date().toLocaleDateString('en-US', { day: 'numeric', year: 'numeric', month: 'short' });
+//     // const commentId = uuidv4();
+//     const blog = await models.blogs.findById(id);
+//     const newComment = { commentId, comment, username: username, date, userMail: email };
+//     if(blog.comments.length < 2){
+//         blog.comments.unshift(newComment);
+//     }
+//     else{
+//         const lastElement = blog.comments.pop();
+//         blog.comments.pop()
+//         blog.comments.unshift(newComment);
+//         const newCmt = new models.comments(lastElement);
+//         await newCmt.save();
 
-    const blog = await models.blogs.findById(id);
-    blog.comments.unshift({ comment, user: username, date, userMail: email });
+//     }
 
-    await blog.save();
-    res.send(blog);
-};
+
+//     await blog.save();
+//     console.log('comment added')
+//     res.send('comment added');
+// };
 
 const cmtdelblog = async (req, res) => {
     const { blogid, cmtindex } = req.params;
@@ -179,7 +199,7 @@ const controllers = {
     deleteBlog,
     update,
     commentsLikes,
-    comment,
+    comment, viewAllComments,
     cmtdelblog,
     like,
     editprofile,
