@@ -160,17 +160,17 @@ const cmtdelblog = async (req, res) => {
 };
 
 const like = async (req, res) => {
-    const { id, action, email } = req.body;
+    const { id, action, userId } = req.body;
     const blog = await models.blogs.findById(id);
 
     if (action === 'like') {
-        blog.likes.unshift({ user: email });
+        blog.likes.unshift({ userId: userId });
     } else if (action === 'unlike') {
-        blog.likes = blog.likes.filter(like => like.user !== email);
+        blog.likes = blog.likes.filter(like => like.userId !== userId);
     }
 
     await blog.save();
-    res.send(blog.likes);
+    res.send({status:'done', likes:blog.likes});
 };
 
 const editprofile = async (req, res) => {
