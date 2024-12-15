@@ -80,8 +80,13 @@ const authentication = async (req, res) => {
 };
 
 const home = async (req, res) => {
-    await models.blogs.find({})
-        .then(result => {res.json(result.reverse())});
+    try {
+        const result = await models.blogs.find({});
+        res.json(result.reverse());
+    } catch (error) {
+        console.error('Error retrieving blogs:', error);
+        res.status(500).json({ message: 'Error fetching blogs' });
+    }
 };
 
 const create = async (req, res) => {
