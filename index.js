@@ -30,32 +30,34 @@ app.use(bodyParser.json());
 app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Routes
-app.use('/', AppRouter);
 
 // Database Connection and Server Initialization
+let io; // Declare io outside the function for later export
+const server = http.createServer(app);
+
+// Initialize WebSocket server using socket.io
+io = new socketIo.Server(server, {
+    cors: {
+        origin: '*', // Replace with actual frontend URL
+        methods: ['GET', 'POST'],
+    },
+});
+app.use('/', AppRouter(io));
 const connectdb = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URL);
-        const server = http.createServer(app);
 
-        // Initialize WebSocket server using socket.io
-        const io = new socketIo.Server(server, {
-            cors: {
-                origin: '*', // Replace with actual frontend URL
-                methods: ['GET', 'POST'],
-            },
-        });
-        
+
         io.on('connection', (socket) => {
             console.log('A user connected');
-        
+
             socket.emit('message', 'Hello from the server!');
-        
+            socket.emit('yourSocketId', socket.id);
             socket.on('message', (msg) => {
                 console.log('Message from client:', msg);
                 socket.emit('message', `Server received: ${msg}`);
             });
-        
+
             socket.on('disconnect', () => {
                 console.log('A user disconnected');
             });
@@ -64,10 +66,19 @@ const connectdb = async () => {
         server.listen(process.env.PORT || 777, () => {
             console.log('Server is running on port:', process.env.PORT || 777);
         });
-
-
     } catch (err) {
         console.error('Error in DB connection:', err);
     }
 };
+
 connectdb();
+
+// Export io for other modules
+const getIo = () => {
+    if (!io) {
+        throw new Error('Socket.IO is not initialized');
+    }
+    return io;
+};
+
+// module.exports = { connectdb,getIo };

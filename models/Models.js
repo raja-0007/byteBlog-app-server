@@ -28,12 +28,17 @@ const commentSchema = mongoose.Schema({
     userMail: String
 })
 
+const messageSchema = mongoose.Schema({
+    chatId: String,
+    messages: Array
+})
 
 const blogs = new mongoose.model('blogs', blogschema)
 const users = new mongoose.model('users', userschema)
 const comments = new mongoose.model('comments', commentSchema)
+const chat = new mongoose.model('chat', messageSchema)
 
 
-const models = {users, blogs, comments}
+const models = {users, blogs, comments, chat}
 
 module.exports = models;

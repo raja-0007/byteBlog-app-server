@@ -1,7 +1,13 @@
 const uuidv4 = require('uuid').v4;
 const models = require('../models/Models');
 const commentHandlers = require('./commentsHandler/CommentsHandler');
+const chatHandlers = require('./chatHandlers/ChatHandler')
+
+
+
 const {comment, viewAllComments } = commentHandlers;
+const {newMessage} = chatHandlers;
+
 
 
 const login = async (req, res) => {
@@ -208,7 +214,9 @@ const controllers = {
     cmtdelblog,
     like,
     editprofile,
-    getprofile
+    getprofile,
+
+    newMessage,
 };
 
 module.exports = controllers;
