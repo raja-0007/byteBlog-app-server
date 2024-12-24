@@ -26,59 +26,101 @@ const newMessage = async (req, res, io) => {
     const names1 = { firstName: from, secondName: to };
 
     const chatId = generateBase64Id(names1);
-    const newMessage = {
+    const newMessage = new models.chat({
+        "chatId": chatId,
         "from": from,
         "message": message,
-        "sent_at": new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: false }),
-        "date": new Date().toLocaleDateString('en-US', { day: 'numeric', year: 'numeric', month: 'short' })
-
-    }
-    const messages = await models.chat.find({ chatId: chatId })
-    console.log('message documents array with chatId', messages)
-    if (messages.length == 0) {
-        const newChat = new models.chat({
+        "sent_at": new Date().toISOString(),
+    })
+    const chat = await models.chatList.find({ chatId: chatId })
+    if (chat.length == 0) {
+        const newChat = new models.chatList({
             chatId: chatId,
-            messages: [newMessage]
+            participants: [from, to],
+            lastMessage: {from: from, message:message},
+            updatedAt: new Date().toISOString()
         })
         await newChat.save()
-            .then((res) => {
-                if (io) {
-                    // const socket = io.sockets.sockets.get(socketId);
-                    // if (io) {
-                        io.emit('message', { status: 'message saved', newMessages: newMessage });
-                    // } else {
-                    //     console.error(`Socket with ID ${socketId} not found`);
-                    // }
-                } else {
-                    console.error('Socket.IO is not initialized');
-                }
-            })
-
     }
     else {
-        let newmessages = [...messages[0].messages, newMessage]
-        await models.chat.findOneAndUpdate(
+        await models.chatList.findOneAndUpdate(
             { chatId: chatId },
-            { messages: newmessages }
+            { lastMessage: message, updatedAt: new Date().toISOString() }
         )
-            .then((res) => {
-                if (io) {
-                    // const socket = io.sockets.sockets.get(socketId);
-
-                    io.emit('message', { status: 'message saved', newMessages: newMessage });
-
-                } else {
-                    console.error('Socket.IO is not initialized');
-                }
-            })
     }
+
+    const messages = await models.chat.find({ chatId: chatId }).sort({ sent_at: 1 })
+    console.log('message documents array with chatId', messages)
+    // if (messages.length == 0) {
+    //     const newChat = new models.chat({
+    //         chatId: chatId,
+    //         messages: [newMessage]
+    //     })
+    //     await newChat.save()
+    //         .then((res) => {
+    //             if (io) {
+    //                 // const socket = io.sockets.sockets.get(socketId);
+    //                 // if (io) {
+    //                 io.emit('message', { status: 'message saved', newMessages: newMessage });
+    //                 // } else {
+    //                 //     console.error(`Socket with ID ${socketId} not found`);
+    //                 // }
+    //             } else {
+    //                 console.error('Socket.IO is not initialized');
+    //             }
+    //         })
+
+    // }
+    // else {
+    //     let newmessages = [...messages[0].messages, newMessage]
+    //     await models.chat.findOneAndUpdate(
+    //         { chatId: chatId },
+    //         { messages: newmessages }
+    //     )
+    //         .then((res) => {
+    //             if (io) {
+    //                 // const socket = io.sockets.sockets.get(socketId);
+
+    //                 io.emit('message', { status: 'message saved', newMessages: newMessage });
+
+    //             } else {
+    //                 console.error('Socket.IO is not initialized');
+    //             }
+    //         })
+    // }
+
+    await newMessage.save()
+    .then((resp) => {
+        if (io) {
+            // const socket = io.sockets.sockets.get(socketId);
+            // if (io) {
+            io.emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
+            // } else {
+            //     console.error(`Socket with ID ${socketId} not found`);
+            // }
+        } else {
+            console.error('Socket.IO is not initialized');
+        }
+    }
+)
+
+
 
 
 }
 
+const getChats = async (req, res, io)=>{
+    const { username } = req.query;
+    console.log('chatlist requested', username)
+
+    const chatList = await models.chatList.find({participants:{$in:[username]}})
+    res.send(chatList)
+}
+
 
 const messageHandler = {
-    newMessage
+    newMessage,
+    getChats
 }
 
 module.exports = messageHandler;

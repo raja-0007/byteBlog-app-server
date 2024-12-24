@@ -5,7 +5,7 @@ const userschema = mongoose.Schema({
     username: String,
     email: String,
     password: String,
-    about:String
+    about: String
 
 })
 const blogschema = mongoose.Schema({
@@ -30,24 +30,26 @@ const commentSchema = mongoose.Schema({
 
 const messageSchema = mongoose.Schema({
     chatId: String,
-    messages: Array
+    from: String,
+    message: String,
+    sentAt: String
 })
 
 const chatSchema = mongoose.Schema({
     chatId: String,
-  participants: Array, 
-  lastMessage: Object, 
-  updatedAt: String
+    participants: Array,
+    lastMessage: Object,
+    updatedAt: String
 })
 
 const blogs = new mongoose.model('blogs', blogschema)
 const users = new mongoose.model('users', userschema)
 const comments = new mongoose.model('comments', commentSchema)
 const chat = new mongoose.model('chat', messageSchema)
-const chats = new mongoose.model('chats', chatSchema)
+const chatList = new mongoose.model('chatList', chatSchema)
 
 
 
-const models = {users, blogs, comments, chat, chats}
+const models = { users, blogs, comments, chat, chatList }
 
 module.exports = models;

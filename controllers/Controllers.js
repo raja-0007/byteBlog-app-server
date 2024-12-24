@@ -6,7 +6,7 @@ const authHandlers = require('./auth/authentication')
 
 
 const {comment, viewAllComments } = commentHandlers;
-const {newMessage} = chatHandlers;
+const {newMessage, getChats} = chatHandlers;
 const {login, signup} = authHandlers;
 
 
@@ -168,7 +168,7 @@ const controllers = {
     editprofile,
     getprofile,
 
-    newMessage,
+    newMessage, getChats
 };
 
 module.exports = controllers;

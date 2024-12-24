@@ -42,6 +42,8 @@ module.exports =(io)=>{
     
     
     router.post('/newMessage', (req, res)=>controllers.newMessage(req, res, io))
+    router.get('/getChats', (req, res)=>controllers.getChats(req, res, io))
+    
 
     return router;
 } 
