@@ -2,67 +2,19 @@ const uuidv4 = require('uuid').v4;
 const models = require('../models/Models');
 const commentHandlers = require('./commentsHandler/CommentsHandler');
 const chatHandlers = require('./chatHandlers/ChatHandler')
-
+const authHandlers = require('./auth/authentication')
 
 
 const {comment, viewAllComments } = commentHandlers;
 const {newMessage} = chatHandlers;
+const {login, signup} = authHandlers;
 
 
 
-const login = async (req, res) => {
-    const { email, password } = req.body;
-    const userslist = await models.users.find({ email });
 
-    if (userslist.length !== 0) {
-        const user = userslist[0];
-        if (password === user.password) {
-            res.send({
-                login: true,
-                user: user.username,
-                email,
-                about: user.about,
-                pstatus: true,
-                exist: true
-            });
-        } else {
-            res.send({
-                login: false,
-                user: '',
-                email: '',
-                pstatus: false,
-                exist: true
-            });
-        }
-    } else {
-        res.send({
-            login: false,
-            user: '',
-            email: '',
-            pstatus: false,
-            exist: false
-        });
-    }
-};
 
-const signup = async (req, res) => {
-    const { username, email, password } = req.body;
-    const userslist = await models.users.find({ email });
 
-    if (userslist.length === 0) {
-        const user = new models.users({
-            username,
-            email,
-            password,
-            about: '-'
-        });
-        await user.save()
-            .then(() => res.send(true))
-            .catch(() => res.send(false));
-    } else {
-        res.send(false);
-    }
-};
+
 
 const authentication = async (req, res) => {
     const { email } = req.params;
