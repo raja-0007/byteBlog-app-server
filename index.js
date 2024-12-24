@@ -43,6 +43,15 @@ io = new socketIo.Server(server, {
     },
 });
 app.use('/', AppRouter(io));
+
+function generateBase64Id(names) {
+    const sortedValues = Object.values(names)
+        .sort() // Sort the values alphabetically
+        .join(''); // Concatenate them into a single string
+
+    return btoa(sortedValues); // Encode the string to Base64
+}
+
 const connectdb = async () => {
     try {
         await mongoose.connect(process.env.MONGO_URL);
@@ -51,12 +60,22 @@ const connectdb = async () => {
         io.on('connection', (socket) => {
             console.log('A user connected');
 
-            socket.emit('message', 'Hello from the server!');
-            socket.emit('yourSocketId', socket.id);
+            // socket.emit('message', 'Hello from the server!');
+            // socket.emit('yourSocketId', socket.id);
             socket.on('message', (msg) => {
                 console.log('Message from client:', msg);
-                socket.emit('message', `Server received: ${msg}`);
+                // socket.emit('message', `Server received: ${msg}`);
             });
+
+            socket.on('joinChat', ({ user1Id, user2Id }) => {
+                const roomId = generateBase64Id({ user1Id, user2Id });
+                socket.join(roomId);
+                // socket.to(socketId).emit('joinedChat', roomId);
+                socket.emit('joinedChat', {roomId: roomId});
+                console.log(`Users joined room: ${roomId}`);
+            });
+
+
 
             socket.on('disconnect', () => {
                 console.log('A user disconnected');

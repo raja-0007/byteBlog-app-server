@@ -32,7 +32,8 @@ const messageSchema = mongoose.Schema({
     chatId: String,
     from: String,
     message: String,
-    sentAt: String
+    sentAt: String,
+    date: String
 })
 
 const chatSchema = mongoose.Schema({

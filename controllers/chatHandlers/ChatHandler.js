@@ -20,7 +20,7 @@ function generateBase64Id(names) {
 }
 
 const newMessage = async (req, res, io) => {
-    const { from, to, message, socketId } = req.body
+    const { from, to, message, roomId } = req.body
     // const io = getIo();
 
     const names1 = { firstName: from, secondName: to };
@@ -30,7 +30,8 @@ const newMessage = async (req, res, io) => {
         "chatId": chatId,
         "from": from,
         "message": message,
-        "sent_at": new Date().toISOString(),
+        "sentAt": new Date().toISOString(),
+        "date": new Date().toLocaleDateString()
     })
     const chat = await models.chatList.find({ chatId: chatId })
     if (chat.length == 0) {
@@ -45,7 +46,7 @@ const newMessage = async (req, res, io) => {
     else {
         await models.chatList.findOneAndUpdate(
             { chatId: chatId },
-            { lastMessage: message, updatedAt: new Date().toISOString() }
+            { lastMessage: {from: from, message:message}, updatedAt: new Date().toISOString() }
         )
     }
 
@@ -94,7 +95,7 @@ const newMessage = async (req, res, io) => {
         if (io) {
             // const socket = io.sockets.sockets.get(socketId);
             // if (io) {
-            io.emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
+            io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
             // } else {
             //     console.error(`Socket with ID ${socketId} not found`);
             // }
