@@ -33,6 +33,8 @@ app.use('/images', express.static(path.join(__dirname, 'images')));
 
 // Database Connection and Server Initialization
 let io; // Declare io outside the function for later export
+let connectedUsers = new Map();
+
 const server = http.createServer(app);
 
 // Initialize WebSocket server using socket.io
@@ -42,7 +44,7 @@ io = new socketIo.Server(server, {
         methods: ['GET', 'POST'],
     },
 });
-app.use('/', AppRouter(io));
+app.use('/', AppRouter(io, connectedUsers));
 
 function generateBase64Id(names) {
     const sortedValues = Object.values(names)
@@ -51,6 +53,7 @@ function generateBase64Id(names) {
 
     return btoa(sortedValues); // Encode the string to Base64
 }
+
 
 const connectdb = async () => {
     try {
@@ -62,6 +65,11 @@ const connectdb = async () => {
 
             // socket.emit('message', 'Hello from the server!');
             // socket.emit('yourSocketId', socket.id);
+            const username = socket.handshake.query.username;
+            // Store user data when they connect
+            connectedUsers.set(socket.id, { username, connectionTime: new Date() });
+            console.log('username', username)
+
             socket.on('message', (msg) => {
                 console.log('Message from client:', msg);
                 // socket.emit('message', `Server received: ${msg}`);
@@ -71,14 +79,23 @@ const connectdb = async () => {
                 const roomId = generateBase64Id({ user1Id, user2Id });
                 socket.join(roomId);
                 // socket.to(socketId).emit('joinedChat', roomId);
-                socket.emit('joinedChat', {roomId: roomId});
+                socket.emit('joinedChat', { roomId: roomId });
                 console.log(`Users joined room: ${roomId}`);
             });
+
+            socket.on('leaveChat', ({ roomId }) => {
+                socket.leave(roomId);
+                console.log(`Users left room: ${roomId}`);
+            })
 
 
 
             socket.on('disconnect', () => {
-                console.log('A user disconnected');
+                const user = connectedUsers.get(socket.id);
+                if (user) {
+                    console.log(`User ${user.username} disconnected`);
+                    connectedUsers.delete(socket.id);
+                }
             });
         });
 

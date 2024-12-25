@@ -22,7 +22,7 @@ const router = express.Router()
 
 
 
-module.exports =(io)=>{
+module.exports =(io, connectedUsers)=>{
     
     router.post('/login', controllers.login)
     router.post('/signup', controllers.signup)
@@ -41,8 +41,8 @@ module.exports =(io)=>{
     router.get('/getprofile/:user',controllers.getprofile)
     
     
-    router.post('/newMessage', (req, res)=>controllers.newMessage(req, res, io))
-    router.get('/getChats', (req, res)=>controllers.getChats(req, res, io))
+    router.post('/newMessage', (req, res)=>controllers.newMessage(req, res, io, connectedUsers))
+    router.get('/getChats', (req, res)=>controllers.getChats(req, res, io, connectedUsers))
     
 
     return router;
