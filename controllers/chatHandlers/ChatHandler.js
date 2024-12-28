@@ -113,11 +113,11 @@ const newMessage = async (req, res, io, connectedUsers) => {
 const getChats = async (req, res, io, connectedUsers)=>{
     const { username } = req.query;
     console.log('chatlist requested', username)
-
+    const allUsers = await models.users.find({});
     const chatList = await models.chatList.find({participants:{$in:[username]}})
     const activeUsers = [...connectedUsers.values()].filter(user => !chatList.some(chat => chat.participants.includes(user)));
-    console.log('active users', activeUsers, connectedUsers)
-    res.send({chatList, activeUsers})
+    // console.log('active users', activeUsers, connectedUsers)
+    res.send({chatList, activeUsers, allUsers})
 }
 
 
