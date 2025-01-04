@@ -43,6 +43,8 @@ module.exports =(io, connectedUsers)=>{
     
     router.post('/newMessage', (req, res)=>controllers.newMessage(req, res, io, connectedUsers))
     router.get('/getChats', (req, res)=>controllers.getChats(req, res, io, connectedUsers))
+    router.get('/getMessages', (req, res)=>controllers.getChat(req, res, io, connectedUsers))
+    
     
 
     return router;

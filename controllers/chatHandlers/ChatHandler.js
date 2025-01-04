@@ -19,6 +19,43 @@ function generateBase64Id(names) {
     return btoa(sortedValues); // Encode the string to Base64
 }
 
+const getChat = async (req, res, io) => {
+    const { from, to, roomId } = req.query
+    // const io = getIo();
+
+    const names1 = { firstName: from, secondName: to };
+
+    const chatId = generateBase64Id(names1);
+
+    const chat = await models.chatList.find({ chatId: chatId })
+    if (chat.length == 0) {
+        const newChat = new models.chatList({
+            chatId: chatId,
+            participants: [from, to],
+            lastMessage: {from: from, message: 'new chat'},
+            updatedAt: new Date().toISOString()
+        })
+        await newChat.save()
+    }
+
+    const messages = await models.chat.find({ chatId: chatId }).sort({ sentAt: 1 })
+    console.log('message documents array with chatId', messages)
+
+        if (io) {
+            // const socket = io.sockets.sockets.get(socketId);
+            // if (io) {
+            io.to(roomId).emit('message', { messages: [...messages] });
+            // } else {
+            //     console.error(`Socket with ID ${socketId} not found`);
+            // }
+        } else {
+            console.error('Socket.IO is not initialized');
+        }
+    
+
+
+}
+
 const newMessage = async (req, res, io, connectedUsers) => {
     const { from, to, message, roomId } = req.body
     // const io = getIo();
@@ -50,7 +87,7 @@ const newMessage = async (req, res, io, connectedUsers) => {
         )
     }
 
-    const messages = await models.chat.find({ chatId: chatId }).sort({ sent_at: 1 })
+    const messages = await models.chat.find({ chatId: chatId }).sort({ sentAt: 1 })
     console.log('message documents array with chatId', messages)
     // if (messages.length == 0) {
     //     const newChat = new models.chat({
@@ -123,7 +160,8 @@ const getChats = async (req, res, io, connectedUsers)=>{
 
 const messageHandler = {
     newMessage,
-    getChats
+    getChats,
+    getChat
 }
 
 module.exports = messageHandler;
