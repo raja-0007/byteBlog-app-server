@@ -59,10 +59,11 @@ const getChat = async (req, res, io) => {
 const newMessage = async (req, res, io, connectedUsers) => {
     const { from, to, message, roomId } = req.body
     // const io = getIo();
-
+    
     const names1 = { firstName: from, secondName: to };
-
+    
     const chatId = generateBase64Id(names1);
+    console.log('new message request', from, to, message, 'roomID',roomId, 'chatId',chatId)
     const newMessage = new models.chat({
         "chatId": chatId,
         "from": from,
@@ -88,7 +89,7 @@ const newMessage = async (req, res, io, connectedUsers) => {
     }
 
     const messages = await models.chat.find({ chatId: chatId }).sort({ sentAt: 1 })
-    console.log('message documents array with chatId', messages)
+    // console.log('message documents array with chatId', messages)
     // if (messages.length == 0) {
     //     const newChat = new models.chat({
     //         chatId: chatId,
@@ -129,6 +130,7 @@ const newMessage = async (req, res, io, connectedUsers) => {
 
     await newMessage.save()
     .then((resp) => {
+        console.log('message saved')
         if (io) {
             // const socket = io.sockets.sockets.get(socketId);
             // if (io) {
