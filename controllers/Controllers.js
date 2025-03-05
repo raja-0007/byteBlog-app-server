@@ -152,6 +152,23 @@ const getprofile = async (req, res) => {
     res.send(profile);
 };
 
+const getBlogById = async (req, res) => {
+    const blogId = req.query.postId;
+    console.log('blogId', blogId)
+    try {
+        const blog = await models.blogs.findById(blogId);   
+        if (!blog) {
+            return res.status(404).json({ message: 'Blog not found' });
+        }
+        console.log('blog fetched', blogId)
+        res.json(blog);
+    } catch (error) {
+        console.error('Error fetching blog by ID:', error);
+        res.status(500).json({ message: 'Error fetching blog' });
+    }
+};
+
+
 const controllers = {
     login,
     signup,
@@ -167,6 +184,7 @@ const controllers = {
     like,
     editprofile,
     getprofile,
+    getBlogById,
 
     newMessage, getChats, getChat
 };

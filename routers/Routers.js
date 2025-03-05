@@ -39,6 +39,7 @@ module.exports =(io, connectedUsers)=>{
     router.post('/like', controllers.like)
     router.post('/editprofile',controllers.editprofile)
     router.get('/getprofile/:user',controllers.getprofile)
+    router.get('/getPostById', controllers.getBlogById)
     
     
     router.post('/newMessage', (req, res)=>controllers.newMessage(req, res, io, connectedUsers))
