@@ -17,7 +17,8 @@ const blogschema = mongoose.Schema({
     comments: Array,
     likes: Array,
     description: String,
-    caption: String
+    caption: String,
+    commentsCount: Number
 })
 
 const commentSchema = mongoose.Schema({
@@ -25,7 +26,8 @@ const commentSchema = mongoose.Schema({
     comment: String,
     username: String,
     date: String,
-    userMail: String
+    userMail: String,
+    blogId: String
 })
 
 const messageSchema = mongoose.Schema({

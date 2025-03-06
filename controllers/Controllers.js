@@ -58,7 +58,8 @@ const create = async (req, res) => {
         comments: [],
         likes: [],
         description:description,
-        caption:caption
+        caption:caption,
+        commentsCount: 0
     });
     await newblog.save()
         .then(() => res.send('blog created'));
@@ -126,6 +127,7 @@ const like = async (req, res) => {
     const { id, action, userId } = req.body;
     const blog = await models.blogs.findById(id);
 
+    console.log('blog like action', action)
     if (action === 'like') {
         blog.likes.unshift({ userId: userId });
     } else if (action === 'unlike') {

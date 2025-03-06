@@ -11,18 +11,20 @@ const comment = async (req, res) => {
     const newComment = { commentId, blogId:id, comment, username: username, date, userMail: email };
     if(blog.comments.length < 2){
         blog.comments.unshift(newComment);
+        blog.commentsCount = blog.commentsCount + 1;
         await blog.save();
-        res.send({status:'comment added', newComments:blog.comments}); 
+        res.send({status:'comment added', newComments:[newComment], commentsCount:blog.commentsCount}); 
 
     }
     else{
         const lastElement = blog.comments.pop();
         blog.comments.unshift(newComment);
+        blog.commentsCount = blog.commentsCount + 1;
         const newCmt = new models.comments(lastElement);
         await newCmt.save();
         await blog.save();
 
-        res.send({status:'comment added', newComments:blog.comments});
+        res.send({status:'comment added', newComments:[newComment], commentsCount:blog.commentsCount});
 
     }
 
