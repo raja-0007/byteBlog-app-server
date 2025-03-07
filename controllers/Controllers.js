@@ -89,31 +89,6 @@ const commentsLikes = async (req, res) => {
     res.send(blog);
 };
 
-// const comment = async (req, res) => {
-//     console.log('comment addition')
-//     const { id, commentId, comment, username, email } = req.body;
-//     const date = new Date().toLocaleDateString('en-US', { day: 'numeric', year: 'numeric', month: 'short' });
-//     // const commentId = uuidv4();
-//     const blog = await models.blogs.findById(id);
-//     const newComment = { commentId, comment, username: username, date, userMail: email };
-//     if(blog.comments.length < 2){
-//         blog.comments.unshift(newComment);
-//     }
-//     else{
-//         const lastElement = blog.comments.pop();
-//         blog.comments.pop()
-//         blog.comments.unshift(newComment);
-//         const newCmt = new models.comments(lastElement);
-//         await newCmt.save();
-
-//     }
-
-
-//     await blog.save();
-//     console.log('comment added')
-//     res.send('comment added');
-// };
-
 const cmtdelblog = async (req, res) => {
     const { blogid, cmtindex } = req.params;
     const blog = await models.blogs.findById(blogid);
