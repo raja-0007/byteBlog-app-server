@@ -12,6 +12,7 @@ const blogschema = mongoose.Schema({
     title: String,
     content: String,
     username: String,
+    authorId: String,
     user: String,
     image: String,
     comments: Array,

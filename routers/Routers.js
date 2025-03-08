@@ -38,7 +38,7 @@ module.exports =(io, connectedUsers)=>{
     router.get('/cmtdelblog/:blogid/cmtdelcmt/:cmtindex', controllers.cmtdelblog)
     router.post('/like', controllers.like)
     router.post('/editprofile',controllers.editprofile)
-    router.get('/getprofile/:user',controllers.getprofile)
+    router.get('/getprofile',controllers.getprofile)
     router.get('/getPostById', controllers.getBlogById)
     
     
