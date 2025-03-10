@@ -125,9 +125,9 @@ const editprofile = async (req, res) => {
 
 const getprofile = async (req, res) => {
     const { user } = req.query;
-    // const profile = await models.users.findOne({ email: user });
+    const profile = await models.users.findOne({ email: user });
     const blogs = await models.blogs.find({authorId: user})
-    res.send(blogs);
+    res.send({blogs, profile});
 };
 
 const getBlogById = async (req, res) => {
