@@ -65,10 +65,10 @@ const connectdb = async () => {
 
             // socket.emit('message', 'Hello from the server!');
             // socket.emit('yourSocketId', socket.id);
-            const username = socket.handshake.query.username;
+            const {username, email} = socket.handshake.query;
             // Store user data when they connect
-            connectedUsers.set(socket.id, { username, connectionTime: new Date() });
-            console.log('username', username)
+            connectedUsers.set(socket.id, { username, userId:email, connectionTime: new Date() });
+            console.log('username', username, email)
 
             socket.on('message', (msg) => {
                 console.log('Message from client:', msg);
@@ -80,7 +80,7 @@ const connectdb = async () => {
                 socket.join(roomId);
                 // socket.to(socketId).emit('joinedChat', roomId);
                 socket.emit('joinedChat', { roomId: roomId });
-                console.log(`Users joined room: ${roomId}`);
+                console.log(`Users joined room: ${roomId}`, socket.id);
             });
 
             socket.on('leaveChat', ({ roomId }) => {
