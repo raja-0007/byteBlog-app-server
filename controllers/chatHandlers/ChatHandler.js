@@ -72,61 +72,19 @@ const newMessage = async (req, res, io, connectedUsers) => {
         "date": new Date().toLocaleDateString()
     })
     const chat = await models.chatList.find({ chatId: chatId })
-    if (chat.length == 0) {
-        const newChat = new models.chatList({
-            chatId: chatId,
-            participants: [from, to],
-            lastMessage: { from: from, message: message },
-            updatedAt: new Date().toISOString()
-        })
-        await newChat.save()
-    }
-    else {
-        await models.chatList.findOneAndUpdate(
-            { chatId: chatId },
-            { lastMessage: { from: from, message: message }, updatedAt: new Date().toISOString() }
-        )
-    }
+    await models.chatList.findOneAndUpdate(
+        { chatId: chatId },
+        {
+            $set: {
+                participants: [from, to],
+                lastMessage: { from: from, message: message },
+                updatedAt: new Date().toISOString()
+            }
+        },
+        { upsert: true } // This ensures it inserts if not found
+    );
 
     const messages = await models.chat.find({ chatId: chatId }).sort({ sentAt: 1 })
-    // console.log('message documents array with chatId', messages)
-    // if (messages.length == 0) {
-    //     const newChat = new models.chat({
-    //         chatId: chatId,
-    //         messages: [newMessage]
-    //     })
-    //     await newChat.save()
-    //         .then((res) => {
-    //             if (io) {
-    //                 // const socket = io.sockets.sockets.get(socketId);
-    //                 // if (io) {
-    //                 io.emit('message', { status: 'message saved', newMessages: newMessage });
-    //                 // } else {
-    //                 //     console.error(`Socket with ID ${socketId} not found`);
-    //                 // }
-    //             } else {
-    //                 console.error('Socket.IO is not initialized');
-    //             }
-    //         })
-
-    // }
-    // else {
-    //     let newmessages = [...messages[0].messages, newMessage]
-    //     await models.chat.findOneAndUpdate(
-    //         { chatId: chatId },
-    //         { messages: newmessages }
-    //     )
-    //         .then((res) => {
-    //             if (io) {
-    //                 // const socket = io.sockets.sockets.get(socketId);
-
-    //                 io.emit('message', { status: 'message saved', newMessages: newMessage });
-
-    //             } else {
-    //                 console.error('Socket.IO is not initialized');
-    //             }
-    //         })
-    // }
 
     await newMessage.save()
         .then((resp) => {
@@ -134,20 +92,46 @@ const newMessage = async (req, res, io, connectedUsers) => {
             if (io) {
                 // const socket = io.sockets.sockets.get(socketId);
                 // if (io) {
-                io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
                 const receiver = [...connectedUsers.entries()].find(([_, user]) => user.username === to);
-                console.log('receiver', receiver, 'connectedUsers', connectedUsers, 'to', to, 'filtered', [...connectedUsers.entries()].filter(([_, user]) => user.userId === to))
+                // const sender = [...connectedUsers.entries()].find(([_, user]) => user.username === from);
+
+
+                console.log('receiver', receiver, 'connectedUsers', connectedUsers, 'to', to, 'filtered', [...connectedUsers.entries()].filter(([_, user]) => user.userId === to));
+
                 if (receiver) {
-                    const receiverSocketId = receiver[0]
-                    console.log('receiverSocketId', receiverSocketId)
-                    io.to(receiverSocketId).emit('new_message', { status: 'message saved', newMessage: newMessage });
+                    const receiverSocketId = receiver[0];
+                    // const senderSocketId = sender[0];
+
+                    // Get receiver's socket ID
+                    console.log('receiverSocketId and senders', receiverSocketId);
+
+                    // Get all socket IDs in the room
+                    const roomSockets = io.sockets.adapter.rooms.get(roomId) || new Set();
+
+                    if (!roomSockets.has(receiverSocketId)) {
+                        // Receiver is NOT in the room, send a direct message to them
+                        
+                        // Also send the message to the room so the sender can see it
+                        
+                        io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
+                        setTimeout(() => {
+                            console.log('now sending to the receiver')
+                        io.to(receiverSocketId).emit('new_message', { status: 'message saved', newMessage });
+                        }, 500);
+                    } else {
+                        // Receiver is in the room, send to the whole room
+                        io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
+                    }
+                } else {
+                    // No receiver found, send to the entire room
+                    io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
                 }
-                // } else {
-                //     console.error(`Socket with ID ${socketId} not found`);
-                // }
+
             } else {
                 console.error('Socket.IO is not initialized');
             }
+
+            res.send('successfully message saved')
         }
         )
 
@@ -162,7 +146,7 @@ const getChats = async (req, res, io, connectedUsers) => {
     const allUsers = await models.users.find({});
     const chatList = await models.chatList.find({ participants: { $in: [username] } })
     const activeUsers = [...connectedUsers.values()].filter(user => !chatList.some(chat => chat.participants.includes(user.userId)));
-    console.log('active users', activeUsers, connectedUsers)
+    // console.log('active users', activeUsers, connectedUsers)
     res.send({ chatList, activeUsers, allUsers })
 }
 
