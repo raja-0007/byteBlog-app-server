@@ -110,7 +110,7 @@ const newMessage = async (req, res, io, connectedUsers) => {
 
                     if (!roomSockets.has(receiverSocketId)) {
                         // Receiver is NOT in the room, send a direct message to them
-                        
+                        console.log('now sending to the receiver to room')
                         // Also send the message to the room so the sender can see it
                         
                         io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
@@ -119,11 +119,14 @@ const newMessage = async (req, res, io, connectedUsers) => {
                         io.to(receiverSocketId).emit('new_message', { status: 'message saved', newMessage });
                         }, 500);
                     } else {
+
                         // Receiver is in the room, send to the whole room
+                        console.log('receiver in room and direct  message to room')
                         io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
                     }
                 } else {
                     // No receiver found, send to the entire room
+                    console.log('no receiver found and direct message to room')
                     io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
                 }
 
