@@ -56,7 +56,7 @@ const getChat = async (req, res, io) => {
 
 }
 
-const newMessage = async (req, res, io, connectedUsers) => {
+const newMessage = async (req, res, io, connectedUsers, callback) => {
     const { from, to, message, roomId } = req.body
     // const io = getIo();
 
@@ -90,51 +90,31 @@ const newMessage = async (req, res, io, connectedUsers) => {
         .then((resp) => {
             console.log('message saved')
             if (io) {
-                // const socket = io.sockets.sockets.get(socketId);
-                // if (io) {
-                const receiver = [...connectedUsers.entries()].find(([_, user]) => user.username === to);
-                // const sender = [...connectedUsers.entries()].find(([_, user]) => user.username === from);
+                console.log(`Message from ${from} to ${to} in room ${roomId}:`, message);
 
+                const receiverEntry = [...connectedUsers.entries()].find(([_, user]) => user.username === to);
+                const receiverSocketId = receiverEntry ? receiverEntry[0] : null;
 
-                console.log('receiver', receiver, 'connectedUsers', connectedUsers, 'to', to, 'filtered', [...connectedUsers.entries()].filter(([_, user]) => user.userId === to));
+                const roomSockets = io.sockets.adapter.rooms.get(roomId) || new Set();
 
-                if (receiver) {
-                    const receiverSocketId = receiver[0];
-                    // const senderSocketId = sender[0];
+                console.log('receiverSocketId', receiverSocketId, 'roomSockets', roomSockets)
 
-                    // Get receiver's socket ID
-                    console.log('receiverSocketId and senders', receiverSocketId);
-
-                    // Get all socket IDs in the room
-                    const roomSockets = io.sockets.adapter.rooms.get(roomId) || new Set();
-
-                    if (!roomSockets.has(receiverSocketId)) {
-                        // Receiver is NOT in the room, send a direct message to them
-                        console.log('now sending to the receiver to room')
-                        // Also send the message to the room so the sender can see it
-                        
-                        io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
-                        setTimeout(() => {
-                            console.log('now sending to the receiver')
-                        io.to(receiverSocketId).emit('new_message', { status: 'message saved', newMessage });
-                        }, 500);
-                    } else {
-
-                        // Receiver is in the room, send to the whole room
-                        console.log('receiver in room and direct  message to room')
-                        io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
-                    }
-                } else {
-                    // No receiver found, send to the entire room
-                    console.log('no receiver found and direct message to room')
-                    io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
+                if (receiverSocketId && !roomSockets.has(receiverSocketId)) {
+                    console.log('Receiver is NOT in the room, sending a direct message.');
+                    io.to(receiverSocketId).emit('new_message', { status: 'message saved', newMessage });
                 }
+
+                // Send message to the room so sender also sees it
+                io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
+
+                // ✅ Send acknowledgment back to the sender
+                callback({ status: 'success', message: 'Message processed' });
 
             } else {
                 console.error('Socket.IO is not initialized');
             }
 
-            res.send('successfully message saved')
+            // res.send('successfully message saved')
         }
         )
 
@@ -149,7 +129,7 @@ const getChats = async (req, res, io, connectedUsers) => {
     const allUsers = await models.users.find({});
     const chatList = await models.chatList.find({ participants: { $in: [username] } })
     const activeUsers = [...connectedUsers.values()].filter(user => !chatList.some(chat => chat.participants.includes(user.userId)));
-    // console.log('active users', activeUsers, connectedUsers)
+    console.log('active users', activeUsers, connectedUsers)
     res.send({ chatList, activeUsers, allUsers })
 }
 

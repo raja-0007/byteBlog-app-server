@@ -9,6 +9,8 @@ const AppRouter = require('./routers/Routers');
 const http = require('http');
 const socketIo = require('socket.io');
 const { Server } = require("socket.io");
+const controllers = require('./controllers/Controllers')
+
 
 
 dotenv.config();
@@ -65,10 +67,18 @@ const connectdb = async () => {
 
             // socket.emit('message', 'Hello from the server!');
             // socket.emit('yourSocketId', socket.id);
-            const {username, email} = socket.handshake.query;
+            const { username, email } = socket.handshake.query;
             // Store user data when they connect
-            connectedUsers.set(socket.id, { username, userId:email, connectionTime: new Date() });
-            console.log('username', username, email)
+            for (const [socketId, user] of connectedUsers.entries()) {
+                if (user.userId === email) {
+                    console.log(`Disconnecting old socket for ${email}`);
+                    io.sockets.sockets.get(socketId)?.disconnect();
+                    connectedUsers.delete(socketId);
+                }
+            }
+
+            connectedUsers.set(socket.id, { username, userId: email, connectionTime: new Date() });
+            console.log('Current connected users:', connectedUsers);
 
             socket.on('message', (msg) => {
                 console.log('Message from client:', msg);
@@ -80,15 +90,18 @@ const connectdb = async () => {
                 socket.join(roomId);
                 // socket.to(socketId).emit('joinedChat', roomId);
                 socket.emit('joinedChat', { roomId: roomId });
-                console.log(`Users joined room: ${roomId}`, socket.id);
+                console.log(`Users joined room: ${roomId}`, socket.id, email);
             });
 
             socket.on('leaveChat', ({ roomId }) => {
                 socket.leave(roomId);
-                console.log(`Users left room: ${roomId}`);
+                console.log(`Users left room: ${roomId}`, email);
             })
 
 
+            socket.on('sendMessage', ({ from, to, roomId, message }, callback) => {
+                controllers.newMessage({body:{from, to, roomId, message}}, 'res', io, connectedUsers, callback);
+            })
 
             socket.on('disconnect', () => {
                 const user = connectedUsers.get(socket.id);
