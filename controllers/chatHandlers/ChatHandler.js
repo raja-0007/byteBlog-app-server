@@ -19,45 +19,81 @@ function generateBase64Id(names) {
     return btoa(sortedValues); // Encode the string to Base64
 }
 
+// const getChat = async (req, res, io) => {
+
+//     console.log("chst requested ")
+//     const { from, to, roomId } = req.query
+//     // const io = getIo();
+
+//     const names1 = { firstName: from, secondName: to };
+
+//     const chatId = generateBase64Id(names1);
+
+//     const chat = await models.chatList.find({ chatId: chatId })
+//     if (chat.length == 0) {
+//         const newChat = new models.chatList({
+//             chatId: chatId,
+//             participants: [from, to],
+//             lastMessage: { from: from, message: 'new chat' },
+//             updatedAt: new Date().toISOString()
+//         })
+//         await newChat.save()
+//     }
+
+//     const messages = await models.chat.find({ chatId: chatId }).sort({ sentAt: 1 })
+//     console.log('message documents array with chatId', messages)
+
+//     if (io) {
+//         // const socket = io.sockets.sockets.get(socketId);
+//         // if (io) {
+//         console.log("messages sent to client")
+
+//         io.to(roomId).emit('message', { messages: [...messages] });
+//         // } else {
+//         //     console.error(`Socket with ID ${socketId} not found`);
+//         // }
+//     } else {
+//         console.error('Socket.IO is not initialized');
+//     }
+
+//     res.send("messages sent")
+
+
+
+// }
+
 const getChat = async (req, res, io) => {
-    const { from, to, roomId } = req.query
-    // const io = getIo();
-
-    const names1 = { firstName: from, secondName: to };
-
-    const chatId = generateBase64Id(names1);
-
-    const chat = await models.chatList.find({ chatId: chatId })
-    if (chat.length == 0) {
-        const newChat = new models.chatList({
-            chatId: chatId,
-            participants: [from, to],
-            lastMessage: { from: from, message: 'new chat' },
-            updatedAt: new Date().toISOString()
-        })
-        await newChat.save()
+    try {
+      console.log("chat requested");
+      const { from, to, roomId } = req.query;
+  
+      const chatId = generateBase64Id({ firstName: from, secondName: to });
+      const messages = await models.chat.find({ chatId }).sort({ sentAt: 1 });
+  
+      // Safe socket emit (never block HTTP response)
+      setImmediate(() => {
+        try {
+          if (io && roomId) {
+            io.to(roomId).emit('message', { messages });
+            console.log("messages sent via socket");
+          }
+        } catch (err) {
+          console.error("socket emit failed:", err);
+        }
+      });
+  
+      // Always respond to the HTTP client
+      res.status(200).json({ messages });
+  
+    } catch (err) {
+      console.error("getChat error:", err);
+      res.status(500).json({ error: err.message });
     }
+  };
+  
 
-    const messages = await models.chat.find({ chatId: chatId }).sort({ sentAt: 1 })
-    // console.log('message documents array with chatId', messages)
-
-    if (io) {
-        // const socket = io.sockets.sockets.get(socketId);
-        // if (io) {
-        io.to(roomId).emit('message', { messages: [...messages] });
-        // } else {
-        //     console.error(`Socket with ID ${socketId} not found`);
-        // }
-    } else {
-        console.error('Socket.IO is not initialized');
-    }
-
-
-
-}
-
-const newMessage = async (req, res, io, connectedUsers, callback) => {
-    const { from, to, message, roomId } = req.body
+  const newMessage = async ({ body }, io, connectedUsers) => {
+    const { from, to, message, roomId } = body;
     // const io = getIo();
 
     const names1 = { firstName: from, secondName: to };
@@ -108,7 +144,7 @@ const newMessage = async (req, res, io, connectedUsers, callback) => {
                 io.to(roomId).emit('message', { status: 'message saved', newMessages: [...messages, newMessage] });
 
                 // ✅ Send acknowledgment back to the sender
-                callback({ status: 'success', message: 'Message processed' });
+                // callback({ status: 'success', message: 'Message processed' });
 
             } else {
                 console.error('Socket.IO is not initialized');

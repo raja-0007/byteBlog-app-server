@@ -68,6 +68,7 @@ const connectdb = async () => {
             // socket.emit('message', 'Hello from the server!');
             // socket.emit('yourSocketId', socket.id);
             const { username, email } = socket.handshake.query;
+            io.emit("update-user-status", { username:username, status: "online" });
             // Store user data when they connect
             for (const [socketId, user] of connectedUsers.entries()) {
                 if (user.userId === email) {
@@ -86,28 +87,40 @@ const connectdb = async () => {
             });
 
             socket.on('joinChat', ({ user1Id, user2Id }) => {
+                setImmediate(() => {
                 const roomId = generateBase64Id({ user1Id, user2Id });
                 socket.join(roomId);
                 // socket.to(socketId).emit('joinedChat', roomId);
                 socket.emit('joinedChat', { roomId: roomId });
                 console.log(`Users joined room: ${roomId}`, socket.id, email);
             });
+            });
 
             socket.on('leaveChat', ({ roomId }) => {
+                setImmediate(() => {
                 socket.leave(roomId);
                 console.log(`Users left room: ${roomId}`, email);
+            });
             })
 
 
-            socket.on('sendMessage', ({ from, to, roomId, message }, callback) => {
-                controllers.newMessage({body:{from, to, roomId, message}}, 'res', io, connectedUsers, callback);
-            })
+            socket.on('sendMessage', async (data, callback) => {
+                try {
+                  await controllers.newMessage({ body: data }, io, connectedUsers);
+                  callback({ status: 'success', message: 'Message processed' });
+                } catch (err) {
+                  console.error('Error in sendMessage:', err);
+                  callback({ status: 'error', message: 'Server error', details: err.message });
+                }
+              });
 
             socket.on('disconnect', () => {
                 const user = connectedUsers.get(socket.id);
                 if (user) {
                     console.log(`User ${user.username} disconnected`);
                     connectedUsers.delete(socket.id);
+                    io.emit("update-user-status", { username:user.username, status: "offline" });
+
                 }
             });
         });
