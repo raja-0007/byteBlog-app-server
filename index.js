@@ -79,7 +79,7 @@ const connectdb = async () => {
             }
 
             connectedUsers.set(socket.id, { username, userId: email, connectionTime: new Date() });
-            console.log('Current connected users:', connectedUsers);
+            // console.log('Current connected users:', connectedUsers);
 
             socket.on('message', (msg) => {
                 console.log('Message from client:', msg);

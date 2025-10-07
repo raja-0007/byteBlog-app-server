@@ -20,7 +20,7 @@ const blogschema = mongoose.Schema({
     description: String,
     caption: String,
     commentsCount: Number
-})
+}, { timestamps: true })
 
 const commentSchema = mongoose.Schema({
     commentId: String,
@@ -37,7 +37,7 @@ const messageSchema = mongoose.Schema({
     message: String,
     sentAt: String,
     date: String
-})
+}, { timestamps: true })
 
 const chatSchema = mongoose.Schema({
     chatId: String,

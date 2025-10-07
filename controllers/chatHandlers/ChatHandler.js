@@ -165,7 +165,7 @@ const getChats = async (req, res, io, connectedUsers) => {
     const allUsers = await models.users.find({});
     const chatList = await models.chatList.find({ participants: { $in: [username] } })
     const activeUsers = [...connectedUsers.values()].filter(user => !chatList.some(chat => chat.participants.includes(user.userId)));
-    console.log('active users', activeUsers, connectedUsers)
+    // console.log('active users', activeUsers, connectedUsers)
     res.send({ chatList, activeUsers, allUsers })
 }
 

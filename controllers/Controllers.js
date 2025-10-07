@@ -39,13 +39,38 @@ const authentication = async (req, res) => {
 
 const home = async (req, res) => {
     try {
-        const result = await models.blogs.find({});
-        res.json(result.reverse());
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 2;
+  
+      const skip = (page - 1) * limit;
+  
+      const blogs = await models.blogs
+        .find({})
+        .sort({ createdAt: -1 }) // newest first
+        .skip(skip)
+        .limit(limit);
+  
+
+      const total = await models.blogs.countDocuments();
+  
+      res.json({
+        success: true,
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        data: blogs,
+      });
     } catch (error) {
-        console.error('Error retrieving blogs:', error);
-        res.status(500).json({ message: 'Error fetching blogs' });
+      console.error('Error retrieving blogs:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching blogs',
+        error: error.message,
+      });
     }
-};
+  };
+  
 
 const create = async (req, res) => {
     const { title, content, authorId, username, description, caption } = req.body;
